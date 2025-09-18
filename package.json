@@ -1,0 +1,21 @@
+{
+  "name": "note-application",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "backend": "cd note-backend && npm run dev",
+    "frontend": "cd note-frontend && npm run dev",
+    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"blue,green\" \"npm run backend\" \"npm run frontend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.8.2",
+    "react-redux": "^9.2.0"
+  }
+}

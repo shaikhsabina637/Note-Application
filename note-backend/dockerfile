@@ -1,0 +1,11 @@
+FROM node:18-alpine
+WORKDIR /usr/src/app
+COPY package*.json ./
+# npm ci --only=production
+# ci = clean install from package-lock.json
+# --only=production = devDependencies skip
+RUN npm ci --only=production
+COPY . .
+ENV NODE_ENV=production
+EXPOSE 5000
+CMD ["npm", "start"]

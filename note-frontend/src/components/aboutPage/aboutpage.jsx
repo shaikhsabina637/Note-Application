@@ -1,10 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import { Lightbulb, Sparkles, Code, Users, Cloud, Lock } from "lucide-react";
+import FeedbackSection from "../feedBackSection/feedBackSection";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8 overflow-y-hidden">
       {/* Hero Section */}
       <div className="max-w-4xl mx-auto text-center mb-16">
         <h1 className="text-5xl font-extrabold text-gray-900 leading-tight mb-6">
@@ -44,41 +45,7 @@ export default function AboutPage() {
       </div>
 
       {/* Key Features Highlight */}
-      <div className="max-w-6xl mx-auto mb-16">
-        <h2 className="text-4xl font-bold text-gray-900 text-center mb-10">What Makes ThoughtVault Unique?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <FeatureCard
-            icon={Sparkles}
-            title="Intuitive Design"
-            description="A clean, user-friendly interface that makes note-taking a joy, not a chore."
-          />
-          <FeatureCard
-            icon={Users}
-            title="Seamless Experience"
-            description="Effortless login, signup, and password recovery processes for a smooth start."
-          />
-          <FeatureCard
-            icon={Code}
-            title="Robust Functionality"
-            description="From rich text editing and file uploads to advanced organization, archiving, and trash management."
-          />
-          <FeatureCard
-            icon={Lightbulb}
-            title="Personalized Control"
-            description="Customize your profile, manage settings, and tailor the app to your preferences."
-          />
-          <FeatureCard
-            icon={Lock}
-            title="Uncompromised Security"
-            description="Your data is protected with strong authentication and privacy measures."
-          />
-          <FeatureCard
-            icon={Cloud}
-            title="Anywhere Access"
-            description="Synchronize your notes across all devices, ensuring your ideas are always with you."
-          />
-        </div>
-      </div>
+    
 
       {/* About the Creator Section */}
       <div className="max-w-6xl mx-auto text-center bg-white shadow-lg rounded-lg p-8 md:p-12">
@@ -105,7 +72,8 @@ export default function AboutPage() {
 </div>
 
       </div>
-
+     {/* feedback section */}
+     <FeedbackSection/>
       {/* Final Call to Action */}
       <div className="max-w-4xl mx-auto text-center mt-16">
         <h2 className="text-4xl font-bold text-gray-900 mb-4">Ready to Experience ThoughtVault?</h2>

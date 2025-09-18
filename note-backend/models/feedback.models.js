@@ -18,6 +18,12 @@ const feedbackSchema = new mongoose.Schema({
     trim: true,
     minLength: [10, "Review must be at least 10 characters"],
     maxLength: [1000, "Review cannot exceed 1000 characters"]
+  },
+  feedBackCategory:{
+    type:String,
+    required: [true, "Please provide a feedback category"],
+    trim :true,
+    enum :["General Feedback","Feature Request","Bug Report","Improvement Suggestion"]
   }
 }, { timestamps: true });
 
