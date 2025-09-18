@@ -18,6 +18,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
     origin:["https://note-application-easy-to-handle.vercel.app","http://localhost:3000"],
+     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials:true
 }))
 //  express-fileupload middleware file ko temporary folder me save karta hai aur uski information req.files me daal deta hai.
