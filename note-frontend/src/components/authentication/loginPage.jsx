@@ -5,7 +5,6 @@ import { login, setLoader } from "../../../slices/authSlice"
 import axios from "axios"
 import { toast } from "react-toastify"
 import { useRouter } from "next/navigation"
-import Spinner from "@/components/common/spinner"
 
 export default function LoginPage() {
   const router = useRouter()

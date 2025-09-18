@@ -216,11 +216,11 @@ export default function NotesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      {loader && (
+      {/* {loader && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10 z-50">
           <Spinner />
         </div>
-      )}
+      )} */}
 
       <div className="max-w-7xl mx-auto mb-8">
         <div className="text-center mb-6">
