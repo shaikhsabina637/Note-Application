@@ -17,7 +17,7 @@ export default function AboutPage() {
         </p>
         <Link
   href="/signup"
-  className="inline-block bg-purple-600 hover:bg-purple-700 text-white text-lg px-8 py-3 rounded-full shadow-lg transition-transform transform hover:scale-105"
+  className="inline-block bg-blue-900 hover:bg-purple-700 text-white text-lg px-8 py-3 rounded-full shadow-lg transition-transform transform hover:scale-105"
 >
   Join ThoughtVault Today
 </Link>

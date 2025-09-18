@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+
+on:   # event to trigger workflow
+  push:
+    branches:
+      - main   # whenever code push on main branch execute this workflow
+
+jobs:
+  build-and-test:  # name of job
+    runs-on: ubuntu-latest # github runner ka os jaha job execute hoga
+
+    steps:  # steps to be perform
+      - name: Checkout code #clone the repo on runner
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js # install node on runner
+        uses: actions/setup-node@v3 
+        with:
+          node-version: 18
+
+      - name: Install dependencies (Backend) #  install dependencies on runner
+        run: |
+          cd note-backend
+          npm install
+
+      - name: Install dependencies (Frontend) #  install dependencies on runner
+        run: |
+          cd note-frontend
+          npm install
+
+  docker-build: # second job for building or pushing images
+    runs-on: ubuntu-latest # github runner ka os jaha job execute hoga
+    needs: build-and-test   # yeh job tab chalenga jab build-and -success job execute ho 
+    steps:  
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker images
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/note-backend ./note-backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/note-backend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/note-frontend ./note-frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/note-frontend
