@@ -573,8 +573,7 @@ export const deleteUserAccount = async(req,res)=>{
     // delete all notes created by this user
     await Note.deleteMany({ user: userID });
     
-    // delete all categories created by this user
-    await Category.deleteMany({ user: userID });
+   
     await Feedback.deleteMany({user:userID})
     //  return the response
     return res.status(200).json({

@@ -8,6 +8,7 @@ import { setUserNotes, addNote, archiveNote, setTrash, togglePinNote } from "../
 import Spinner from "../common/spinner"
 import { setLoader } from "../../../slices/authSlice"
 import { toast } from "react-toastify"
+
 export default function NotesPage() {
   const dispatch = useDispatch()
   const token = useSelector((state) => state.auth.token)
@@ -23,7 +24,7 @@ export default function NotesPage() {
     file: null,
   })
   const [editingNote, setEditingNote] = useState(null)
-  const [openMenuId, setOpenMenuId] = useState(null) // ✅ added for dropdown state
+  const [openMenuId, setOpenMenuId] = useState(null)
   const [loadingStates, setLoadingStates] = useState({
     addingNote: false,
     pinning: new Set(),
@@ -37,8 +38,8 @@ export default function NotesPage() {
 
   // fetch notes of a user
   useEffect(() => {
-    if(!token){
-      return 
+    if (!token) {
+      return
     }
     const fetchNotes = async () => {
       dispatch(setLoader(true))
@@ -56,7 +57,7 @@ export default function NotesPage() {
     fetchNotes()
   }, [dispatch, token])
 
-  // add or update note
+  // add or update note - FIXED FILE UPLOAD
   const handleAddOrUpdate = async (e) => {
     e.preventDefault()
     if (!newNote.title.trim() || !newNote.content.trim()) return
@@ -68,7 +69,19 @@ export default function NotesPage() {
       formData.append("title", newNote.title)
       formData.append("content", newNote.content)
       formData.append("category", newNote.category)
-      if (newNote.file) formData.append("attachments", newNote.file)
+      
+      // FIXED: Proper file handling with validation
+      if (newNote.file && newNote.file instanceof File && newNote.file.size > 0) {
+        formData.append("attachments", newNote.file)
+        console.log("Attaching file:", newNote.file.name, newNote.file.size)
+      } else if (newNote.file) {
+        console.warn("Invalid file, not attaching:", newNote.file)
+      }
+
+      // Debug: Log FormData contents
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value)
+      }
 
       if (editingNote) {
         const res = await axios.patch(
@@ -82,7 +95,7 @@ export default function NotesPage() {
           },
         )
         const updatedFromRes = res.data?.note
-  
+
         if (updatedFromRes) {
           const updatedNotes = notes.map((note) =>
             note._id === editingNote._id ? { ...note, ...updatedFromRes } : note,
@@ -103,9 +116,8 @@ export default function NotesPage() {
       setNewNote({ title: "", content: "", category: "Personal", file: null })
       setIsModalOpen(false)
     } catch (err) {
-      console.error("Error saving note:", err.message)
-      toast.error(err.response?.data?.message|| err.message)
-      
+      console.error("Error saving note:", err.response?.data || err.message)
+      toast.error(err.response?.data?.message || "Failed to save note")
     } finally {
       setLoadingStates((prev) => ({ ...prev, addingNote: false }))
     }
@@ -201,30 +213,24 @@ export default function NotesPage() {
         return { ...prev, [actionType]: newSet }
       })
     }
-    setOpenMenuId(null) // ✅ close menu after action
+    setOpenMenuId(null)
   }
 
-  // edit handler
+  // edit handler - FIXED: Don't set file from note data
   const startEdit = (note) => {
     setEditingNote(note)
     setNewNote({
       title: note.title,
       content: note.content,
       category: note.category,
-      file: note.file || null,
+      file: null, // Don't set file from existing note to avoid conflicts
     })
     setIsModalOpen(true)
-    setOpenMenuId(null) // ✅ close menu after action
+    setOpenMenuId(null)
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      {/* {loader && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10 z-50">
-          <Spinner />
-        </div>
-      )} */}
-
       <div className="max-w-7xl mx-auto mb-8">
         <div className="text-center mb-6">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">My Notes</h1>
@@ -341,27 +347,47 @@ export default function NotesPage() {
                 <div className="mt-8">
                   <h3 className="font-semibold text-gray-900 mb-2 pr-8">{note.title}</h3>
                   <p className="text-gray-600 text-sm mb-3 whitespace-pre-line">{note.content}</p>
-                  {note.noteAttachment && note.noteAttachment.length > 0 && (
-                    <div className="mb-3">
-                      {note.noteAttachment.map((fileUrl, idx) =>
-                        fileUrl.endsWith(".pdf") ? (
-                          <iframe
-                            key={fileUrl || idx}
-                            src={fileUrl}
-                            title={`PDF-${idx}`}
-                            className="w-full h-40 rounded-lg border"
-                          />
-                        ) : (
-                          <img
-                            key={fileUrl || idx}
-                            src={fileUrl || "/placeholder.svg"}
-                            alt={`Attachment-${idx}`}
-                            className="rounded-lg max-h-40 w-full object-cover"
-                          />
-                        ),
-                      )}
-                    </div>
-                  )}
+                {note.noteAttachment && note.noteAttachment.length > 0 && (
+  <div className="mb-3">
+    {note.noteAttachment.map((fileUrl, idx) => {
+      const isPDF = fileUrl.toLowerCase().endsWith('.pdf');
+      
+      if (isPDF) {
+        return (
+          <div key={fileUrl || idx} className="border rounded-lg p-2 bg-gray-50 mb-2">
+            <div className="flex items-center mb-2">
+              <svg className="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <span className="text-sm font-medium">PDF Document</span>
+            </div>
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 text-sm underline"
+            >
+              View PDF
+            </a>
+            <p>For viewing you need authority!</p>
+          </div>
+        );
+      } else {
+        return (
+          <img
+            key={fileUrl || idx}
+            src={fileUrl || "/placeholder.svg"}
+            alt={`Attachment-${idx}`}
+            className="rounded-lg max-h-40 w-full object-cover mb-2"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        );
+      }
+    })}
+  </div>
+)}
                   <div className="flex justify-between items-center text-xs text-gray-400">
                     <span className="bg-gray-100 px-2 py-1 rounded-full">{note.category}</span>
                     <span>
@@ -399,111 +425,109 @@ export default function NotesPage() {
       </button>
 
       {/* Add / Edit Modal */}
-{/* Add / Edit Modal */}
-{isModalOpen && (
-  <div className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none">
-    {/* Background blur */}
-    <div className="absolute inset-0 backdrop-blur-sm pointer-events-none"></div>
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none">
+          <div className="absolute inset-0 backdrop-blur-sm pointer-events-none"></div>
 
-    <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto pointer-events-auto relative z-10">
-      <div className="flex justify-between items-center p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">{editingNote ? "Edit Note" : "Add New Note"}</h2>
-        <button
-          onClick={() => {
-            setIsModalOpen(false)
-            setEditingNote(null)
-            setNewNote({ title: "", content: "", category: "Personal", file: null })
-          }}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <X className="h-6 w-6" />
-        </button>
-      </div>
-      <div className="p-6">
-        <form onSubmit={handleAddOrUpdate} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-            <input
-              type="text"
-              placeholder="Enter note title..."
-              value={newNote.title}
-              onChange={(e) => setNewNote((prev) => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-              required
-            />
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto pointer-events-auto relative z-10">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">{editingNote ? "Edit Note" : "Add New Note"}</h2>
+              <button
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setEditingNote(null)
+                  setNewNote({ title: "", content: "", category: "Personal", file: null })
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <form onSubmit={handleAddOrUpdate} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <input
+                    type="text"
+                    placeholder="Enter note title..."
+                    value={newNote.title}
+                    onChange={(e) => setNewNote((prev) => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <select
+                    value={newNote.category}
+                    onChange={(e) => setNewNote((prev) => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                  >
+                    <option value="Personal">Personal</option>
+                    <option value="Work">Work</option>
+                    <option value="Study">Study</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Write your note here..."
+                    value={newNote.content}
+                    onChange={(e) => setNewNote((prev) => ({ ...prev, content: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Attach Image or PDF</label>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => {
+                      const selectedFile = e.target.files && e.target.files.length > 0 
+                        ? e.target.files[0] 
+                        : null;
+                      setNewNote((prev) => ({ ...prev, file: selectedFile }))
+                    }}
+                    className="w-full text-sm text-gray-600"
+                  />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false)
+                      setEditingNote(null)
+                      setNewNote({ title: "", content: "", category: "Personal", file: null })
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loadingStates.addingNote}
+                    className={`flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
+                      loadingStates.addingNote ? "opacity-75" : ""
+                    }`}
+                  >
+                    {loadingStates.addingNote ? (
+                      <>
+                        <Spinner />
+                        <span>{editingNote ? "Updating..." : "Adding..."}</span>
+                      </>
+                    ) : (
+                      <span>{editingNote ? "Update Note" : "Add Note"}</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-            <select
-              value={newNote.category}
-              onChange={(e) => setNewNote((prev) => ({ ...prev, category: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-            >
-              <option value="Personal">Personal</option>
-              <option value="Work">Work</option>
-              <option value="Creative">Creative</option>
-              <option value="Health">Health</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-            <textarea
-              rows={4}
-              placeholder="Write your note here..."
-              value={newNote.content}
-              onChange={(e) => setNewNote((prev) => ({ ...prev, content: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Attach Image or PDF</label>
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={(e) =>
-                setNewNote((prev) => ({ ...prev, file: e.target.files ? e.target.files[0] : null }))
-              }
-              className="w-full text-sm text-gray-600"
-            />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setIsModalOpen(false)
-                setEditingNote(null)
-                setNewNote({ title: "", content: "", category: "Personal", file: null })
-              }}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loadingStates.addingNote}
-              className={`flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
-                loadingStates.addingNote ? "opacity-75" : ""
-              }`}
-            >
-              {loadingStates.addingNote ? (
-                <>
-                  <Spinner />
-                  <span>{editingNote ? "Updating..." : "Adding..."}</span>
-                </>
-              ) : (
-                <span>{editingNote ? "Update Note" : "Add Note"}</span>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-)}
-
-
-
+        </div>
+      )}
     </div>
   )
 }

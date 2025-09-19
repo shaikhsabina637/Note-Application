@@ -162,7 +162,8 @@ const handleImageUpload = async (e) => {
     }
     dispatch(setLoader(true))
     try {
-  const response = await axios.delete(url, {
+  const response = await axios.delete( `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/deleteprofile`,
+ {
     headers: { Authorization: `Bearer ${token}` },
     withCredentials: true,
   });
