@@ -80,86 +80,106 @@ export const addNote = async(req,res)=>{
    
 }
 // editing a note
-export const editNote = async(req,res)=>{
-    try{
-        // get the data from the user 
-        const {title,category,content} = req.body;
-        const noteId = req.params.id;
-        const attachments = req.files ? Object.values(req.files) : []
-        // validate the data from the user
-        if(!title && !category && !content && attachments.length == 0) {
-            return res.status(400).json({
-                success:false,
-                message:"No Data Provided to updated!"
-            })
-        }
-        // find the user by id
-        const userId = req.user.id;
-        if(!userId) {
-            return res.status(400).json({
-                success:false,
-                message:"Don't find user"
-            })
-        }
-        // find the user note
-        const user = await User.findById(userId)
-        if(!user){
-            return res.status(400).json({
-                success:false,
-                message:"User not found!"
-            })
-        }
-        let uploadedFiles = [];
-      if (attachments.length > 0) {
+export const editNote = async (req, res) => {
+  try {
+    // get the data from the user 
+    const { title, category, content } = req.body;
+    const noteId = req.params.id;
+
+    // Handle file input properly (single or multiple)
+    let attachments = [];
+    if (req.files && req.files.attachments) {
+      if (Array.isArray(req.files.attachments)) {
+        attachments = req.files.attachments; // multiple files
+      } else {
+        attachments = [req.files.attachments]; // single file
+      }
+    }
+
+    // validate the data from the user
+    if (!title && !category && !content && attachments.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No Data Provided to update!",
+      });
+    }
+
+    // find the user by id
+    const userId = req.user.id;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Don't find user",
+      });
+    }
+
+    // find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found!",
+      });
+    }
+
+    // Upload new files if available
+    let uploadedFiles = [];
+    if (attachments.length > 0) {
       for (let file of attachments) {
+        if (!file.tempFilePath) {
+          return res.status(400).json({
+            success: false,
+            message: "File upload error: tempFilePath missing",
+          });
+        }
+
         const result = await cloudinary.uploader.upload(file.tempFilePath, {
           folder: "notes-app",
           resource_type: "auto", // images/pdfs/videos all
         });
 
-        uploadedFiles.push(
-           result.secure_url,
-        );
+        uploadedFiles.push(result.secure_url);
       }
     }
-        //  find note with id 
-        const note = await Note.findById(noteId)
-        if(!note){
-            return res.status(400).json({
-                success:false,
-                message:"Can't find Note"
-            })
-        }
-        if(title){
-            note.title = title
-        }
-        if(category){
-            note.category = category
-        }if(content){
-            note.content = content
-        }
-        if(attachments.length > 0){
-            note.noteAttachment = uploadedFiles
-        }
-        await note.save()
-        user.notes.push(note._id)
-    await user.save()
-        // return res
-        return res.status(200).json({
-            success:true,
-            message:"Updated note!",
-            note
-        })
-    }catch(error){
-        console.log("Error",error)
-        return res.status(500).json({
-            success:false,
-            message:"Error in Server while Editing a Note!",
-            error:error.message
-        })
+
+    // find note with id 
+    const note = await Note.findById(noteId);
+    if (!note) {
+      return res.status(400).json({
+        success: false,
+        message: "Can't find Note",
+      });
     }
 
-}
+    // update fields
+    if (title) note.title = title;
+    if (category) note.category = category;
+    if (content) note.content = content;
+    if (attachments.length > 0) note.noteAttachment = uploadedFiles;
+
+    await note.save();
+
+    if (!user.notes.includes(note._id)) {
+      user.notes.push(note._id);
+      await user.save();
+    }
+
+    // return res
+    return res.status(200).json({
+      success: true,
+      message: "Updated note!",
+      note,
+    });
+  } catch (error) {
+    console.log("Error in editNote:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error in Server while Editing a Note!",
+      error: error.message,
+    });
+  }
+};
+
 // deleting a note
 export const deleteNote = async(req,res)=>{
       try{
