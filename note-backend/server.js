@@ -25,7 +25,6 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }))
-app.options("*", cors())
 //  express-fileupload middleware file ko temporary folder me save karta hai aur uski information req.files me daal deta hai.
 app.use(fileUpload({
   useTempFiles: true,       // temp file banata hai
