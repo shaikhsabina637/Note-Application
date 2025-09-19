@@ -68,7 +68,7 @@ export default function NotesPage() {
       formData.append("title", newNote.title)
       formData.append("content", newNote.content)
       formData.append("category", newNote.category)
-      if (newNote.file) formData.append("file", newNote.file)
+      if (newNote.file) formData.append("attachments", newNote.file)
 
       if (editingNote) {
         const res = await axios.patch(
@@ -103,7 +103,7 @@ export default function NotesPage() {
       setNewNote({ title: "", content: "", category: "Personal", file: null })
       setIsModalOpen(false)
     } catch (err) {
-      console.error("Error saving note:", err)
+      console.error("Error saving note:", err.message)
       toast.error(err.response?.data?.message|| err.message)
       
     } finally {
