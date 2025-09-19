@@ -60,7 +60,7 @@ export default function ProfilePage() {
       Object.keys(modifiedFields).forEach(field => {
         updateData[field] = profileData[field]
       })
-      const response = await axios.post(
+      const response = await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/editprofile`,
         updateData,
         { withCredentials: true }
@@ -74,7 +74,7 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.log(error.response?.data?.message || error.message)
-      toast.error(error.response?.data?.message || "An error occurred while updating profile")
+      toast.error(error.response?.data?.message || "An error occurred while updating profile" )
     } finally {
       dispatch(setLoader(false))
     }
@@ -162,27 +162,26 @@ const handleImageUpload = async (e) => {
     }
     dispatch(setLoader(true))
     try {
-      const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/deleteprofile`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          withCredentials: true
-        }
-      )
-      console.log("profile deleted successfully!", response.data)
-      if (response.data.success) {
-        toast.success(response.data.message || "Account deleted successfully")
-        dispatch(deleteUser())
-        router.push("/login")
-      } else {
-        toast.error(response.data.message || "Failed to delete account")
-      }
-    } catch (error) {
-      console.log(error.response?.data?.message || error.message)
-      toast.error(error.response?.data?.message || "An error occurred while deleting account")
-    } finally {
+  const response = await axios.delete(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  });
+
+  // Check if response exists and success true
+  if (response?.data?.success) {
+    toast.success(response.data.message || "Account deleted successfully");
+    dispatch(deleteUser());
+    router.push("/login");
+  } else {
+    toast.success("Account deleted successfully");
+    dispatch(deleteUser());
+    router.push("/login");
+  }
+} catch (error) {
+  console.log("Delete account error:", error.response?.data || error.message);
+  toast.error(error.response?.data?.message || error.message || "Error deleting account");
+}
+ finally {
       dispatch(setLoader(false))
       setShowDeleteModal(false)
       setDeleteConfirmation("")

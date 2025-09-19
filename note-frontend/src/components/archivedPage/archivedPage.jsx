@@ -286,9 +286,7 @@ export default function ArchivedPage() {
                       Created: {note.createdAt ? new Date(note.createdAt).toLocaleDateString() : "Unknown date"}
                     </span>
                   </div>
-                  <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-center">
-                    Archived: {note.archivedAt ? new Date(note.archivedAt).toLocaleDateString() : "Unknown date"}
-                  </div>
+                  
                 </div>
 
                 {/* Quick Action Buttons */}

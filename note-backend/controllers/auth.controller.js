@@ -412,41 +412,60 @@ export const contact = async (req,res)=>{
         });
     }
 }
-// edit user profile
-export const editProfile = async (req,res)=>{
-    try{
-        // get the data from the user
-        const {firstName ,lastName ,email} = req.body;
-        // check if this user exits in db or not
-        const userID = req.user.id;
-        if(!userID){
-            return res.status(404).json({
-                success:false,
-                message:"Don't find user with this id!"
-            })
-        }
-        const user = await User.findById(userID)
-        // updating in the db
-        if (firstName) user.firstName = firstName;
-        if (lastName)  user.lastName   = lastName;
-        if (email)     user.email      = email;
-        
-        await user.save();
 
-        // after updating returning the response
-        return res.status(200).json({
-            success:true,
-            message:"Updated Profile!"
-        })
-    }catch(error){
-        console.log("error",error)
-        return res.status(500).json({
-            success:false,
-            message:"Error while updating profile!",
-            error:error.message
-        })
+export const editProfile = async (req, res) => {
+  try {
+    const { firstName, lastName, email } = req.body;
+    const userID = req.user.id;
+
+    if (!userID) {
+      return res.status(404).json({
+        success: false,
+        message: "Don't find user with this id!",
+      });
     }
-}
+
+    const user = await User.findById(userID);
+
+    // flag for name change
+    let nameChanged = false;
+
+    if (firstName && firstName !== user.firstName) {
+      user.firstName = firstName;
+      nameChanged = true;
+    }
+    if (lastName && lastName !== user.lastName) {
+      user.lastName = lastName;
+      nameChanged = true;
+    }
+    if (email) {
+      user.email = email;
+    }
+
+    // only update image if:
+    // 1. name changed
+    // 2. and current image is dicebear
+    if (nameChanged && user.image.includes("dicebear.com")) {
+      user.image = `https://api.dicebear.com/5.x/initials/svg?seed=${user.firstName} ${user.lastName}`;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Updated Profile!",
+      user, // return updated user object for frontend
+    });
+  } catch (error) {
+    console.log("error", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error while updating profile!",
+      error: error.message,
+    });
+  }
+};
+
 // edit user profile image
 export const editProfileImage = async (req, res) => {
   try {
@@ -556,6 +575,7 @@ export const deleteUserAccount = async(req,res)=>{
     
     // delete all categories created by this user
     await Category.deleteMany({ user: userID });
+    await Feedback.deleteMany({user:userID})
     //  return the response
     return res.status(200).json({
         success:true,

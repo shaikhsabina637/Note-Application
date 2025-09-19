@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { setUserNotes, addNote, archiveNote, setTrash, togglePinNote } from "../../../slices/noteSlice"
 import Spinner from "../common/spinner"
 import { setLoader } from "../../../slices/authSlice"
-
+import { toast } from "react-toastify"
 export default function NotesPage() {
   const dispatch = useDispatch()
   const token = useSelector((state) => state.auth.token)
@@ -82,6 +82,7 @@ export default function NotesPage() {
           },
         )
         const updatedFromRes = res.data?.note
+  
         if (updatedFromRes) {
           const updatedNotes = notes.map((note) =>
             note._id === editingNote._id ? { ...note, ...updatedFromRes } : note,
@@ -103,6 +104,8 @@ export default function NotesPage() {
       setIsModalOpen(false)
     } catch (err) {
       console.error("Error saving note:", err)
+      toast.error(err.response?.data?.message|| err.message)
+      
     } finally {
       setLoadingStates((prev) => ({ ...prev, addingNote: false }))
     }
