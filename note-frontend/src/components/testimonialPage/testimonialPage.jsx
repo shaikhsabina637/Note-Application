@@ -16,6 +16,7 @@ export default function TestimonialsSection() {
       try {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/getFeedback`) // apna backend API endpoint dalna
         if (res.data.success) {
+          console.log("feedback response",res.data)
           const mappedData = res.data.userFeedbacks.map((fb, index) => ({
             id: fb._id,
             name: `${fb.user.firstName} ${fb.user.lastName}`,
@@ -29,7 +30,7 @@ export default function TestimonialsSection() {
           setTestimonials(mappedData)
         }
       } catch (error) {
-        console.log(`Error while fetching OTP : `,error.response?.data?.message|| error.message)
+        console.log(`Error while fetching feed back : `,error.response?.data?.message|| error.message)
                   toast.error(error.response?.data?.message|| error.message)
       }
     }
